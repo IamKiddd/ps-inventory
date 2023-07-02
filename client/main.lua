@@ -15,39 +15,6 @@ local isHotbar = false
 local WeaponAttachments = {}
 local showBlur = true
 
-local function HasItem(items, amount)
-    local isTable = type(items) == 'table'
-    local isArray = isTable and table.type(items) == 'array' or false
-    local totalItems = #items
-    local count = 0
-    local kvIndex = 2
-	if isTable and not isArray then
-        totalItems = 0
-        for _ in pairs(items) do totalItems += 1 end
-        kvIndex = 1
-    end
-    for _, itemData in pairs(PlayerData.items) do
-        if isTable then
-            for k, v in pairs(items) do
-                local itemKV = {k, v}
-                if itemData and itemData.name == itemKV[kvIndex] and ((amount and itemData.amount >= amount) or (not isArray and itemData.amount >= v) or (not amount and isArray)) then
-                    count += 1
-                end
-            end
-            if count == totalItems then
-                return true
-            end
-        else -- Single item as string
-            if itemData and itemData.name == items and (not amount or (itemData and amount and itemData.amount >= amount)) then
-                return true
-            end
-        end
-    end
-    return false
-end
-
-exports("HasItem", HasItem)
-
 RegisterNUICallback('showBlur', function()
     Wait(50)
     TriggerEvent("ps-inventory:client:showBlur")
@@ -125,7 +92,6 @@ end
 local function IsBackEngine(vehModel)
     return BackEngineVehicles[vehModel]
 end
-
 
 local function OpenTrunk()
     local vehicle = QBCore.Functions.GetClosestVehicle()
@@ -456,23 +422,30 @@ RegisterNetEvent('inventory:client:OpenInventory', function(PlayerAmmo, inventor
             if other then
                 currentOtherInventory = other.name
             end
-        QBCore.Functions.TriggerCallback('inventory:server:ConvertQuality', function(data)
-            inventory = data.inventory
-            other = data.other
-            SendNUIMessage({
-                action = "open",
-                inventory = inventory,
-                slots = Config.MaxInventorySlots,
-                other = other,
-                maxweight = Config.MaxInventoryWeight,
-                Ammo = PlayerAmmo,
-                maxammo = Config.MaximumAmmoValues,
-                Name = PlayerData.charinfo.firstname .." ".. PlayerData.charinfo.lastname .." - [".. GetPlayerServerId(PlayerId()) .."]", 
-            })
-            inInventory = true
+            QBCore.Functions.TriggerCallback('inventory:server:ConvertQuality', function(data)
+                inventory = data.inventory
+                other = data.other
+                SendNUIMessage({
+                    action = "open",
+                    inventory = inventory,
+                    slots = Config.MaxInventorySlots,
+                    other = other,
+                    maxweight = Config.MaxInventoryWeight,
+                    Ammo = PlayerAmmo,
+                    maxammo = Config.MaximumAmmoValues,
+                    Name = PlayerData.charinfo.firstname .." ".. PlayerData.charinfo.lastname .." - [".. GetPlayerServerId(PlayerId()) .."]", 
+                })
+                inInventory = true
             end,inventory,other)
         end
     end
+end)
+
+RegisterNUICallback("SetInventoryData", function(data, cb)
+    print(json.encode(data))
+    QBCore.Functions.TriggerCallback('inventory:server:SetInventoryData', function(inventory, other)
+        cb({inventory = inventory, slots = Config.MaxInventorySlots, other = other, maxweight = Config.MaxInventoryWeight})
+    end, data)
 end)
 
 RegisterNetEvent('inventory:client:UpdateOtherInventory', function(items, isError)
@@ -902,16 +875,16 @@ RegisterNUICallback("CloseInventory", function()
     end
     if CurrentVehicle ~= nil then
         CloseTrunk()
-        TriggerServerEvent("inventory:server:SaveInventory", "trunk", CurrentVehicle)
+        TriggerServerEvent('inventory:server:SetIsOpenState', false, "trunk", CurrentVehicle)
         CurrentVehicle = nil
     elseif CurrentGlovebox ~= nil then
-        TriggerServerEvent("inventory:server:SaveInventory", "glovebox", CurrentGlovebox)
+        TriggerServerEvent('inventory:server:SetIsOpenState', false, "glovebox", CurrentGlovebox)
         CurrentGlovebox = nil
     elseif CurrentStash ~= nil then
-        TriggerServerEvent("inventory:server:SaveInventory", "stash", CurrentStash)
+        TriggerServerEvent('inventory:server:SetIsOpenState', false, "stash", CurrentStash)
         CurrentStash = nil
     else
-        TriggerServerEvent("inventory:server:SaveInventory", "drop", CurrentDrop)
+        TriggerServerEvent('inventory:server:SetIsOpenState', false, "drop", CurrentDrop)
         CurrentDrop = nil
     end
     Wait(50)
@@ -957,18 +930,14 @@ RegisterNUICallback('combineWithAnim', function(data, cb)
     cb('ok')
 end)
 
-RegisterNUICallback("SetInventoryData", function(data, cb)
-    TriggerServerEvent("inventory:server:SetInventoryData", data.fromInventory, data.toInventory, data.fromSlot, data.toSlot, data.fromAmount, data.toAmount)
-    cb('ok')
-end)
 
 RegisterNUICallback("PlayDropSound", function(_, cb)
-    PlaySound(-1, "CLICK_BACK", "WEB_NAVIGATION_SOUNDS_PHONE", 0, 0, 1)
+    PlaySound(-1, "CLICK_BACK", "WEB_NAVIGATION_SOUNDS_PHONE", false, 0, true)
     cb('ok')
 end)
 
 RegisterNUICallback("PlayDropFail", function(_, cb)
-    PlaySound(-1, "Place_Prop_Fail", "DLC_Dmod_Prop_Editor_Sounds", 0, 0, 1)
+    PlaySound(-1, "Place_Prop_Fail", "DLC_Dmod_Prop_Editor_Sounds", false, 0, true)
     cb('ok')
 end)
 
@@ -1063,15 +1032,12 @@ end)
         crafting.items = GetThresholdItems()
         TriggerServerEvent("inventory:server:OpenInventory", "crafting", math.random(1, 99), crafting)
     end)
-    
-    
     RegisterNetEvent("inventory:client:WeaponAttachmentCrafting", function(dropId)
         local crafting = {}
         crafting.label = "Attachment Crafting"
         crafting.items = GetAttachmentThresholdItems()
         TriggerServerEvent("inventory:server:OpenInventory", "attachment_crafting", math.random(1, 99), crafting)
     end)
-    
     local toolBoxModels = {
         `prop_toolchest_05`,
         `prop_tool_bench02_ld`,
