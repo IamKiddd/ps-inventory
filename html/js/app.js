@@ -34,9 +34,7 @@ var playerMaxWeight = 0;
 var otherMaxWeight = 0;
 var playerSlots = 0;
 var otherLabel = "";
-
 var ClickedItemData = {};
-
 var SelectedAttachment = null;
 var AttachmentScreenActive = false;
 var ControlPressed = false;
@@ -127,6 +125,18 @@ function CanQuickMove() {
     retval = false;
   }
   return retval;
+}
+
+function getImgSrc(info) {
+  if (info) {
+    if(info.addOn) {
+      return ''
+    } else {
+      return 'images/';
+    } 
+  } else {
+    return 'images/';
+  }
 }
 
 $(document).on("mousedown", ".item-slot", function (event) {
@@ -329,7 +339,7 @@ function FormatAttachmentInfo(data) {
                 i +
                 '"> <div class="weapon-attachment-label"><p>' +
                 attachment.label +
-                '</p></div> <div class="weapon-attachment-img"><img src="./images/' +
+                '</p></div> <div class="weapon-attachment-img"><img src="' + getImgSrc(attachment.info.addOn) +
                 attachment.image +
                 '"></div> </div>'
             );
@@ -920,7 +930,7 @@ function updateweights($fromSlot, $toSlot, $fromInv, $toInv, $toAmount) {
           $fromInv
               .find("[data-slot=" + $fromSlot + "]")
               .html(
-                  '<div class="item-slot-img"><img src="images/' +
+                  '<div class="item-slot-img"><img src="' + getImgSrc(itemData.info.addOn) +
                   itemData.image +
                   '" alt="' +
                   itemData.name +
@@ -937,7 +947,7 @@ function updateweights($fromSlot, $toSlot, $fromInv, $toInv, $toAmount) {
           $fromInv
               .find("[data-slot=" + $fromSlot + "]")
               .html(
-                  '<div class="item-slot-img"><img src="images/' +
+                  '<div class="item-slot-img"><img src="' + getImgSrc(itemData.info.addOn) +
                   itemData.image +
                   '" alt="' +
                   itemData.name +
@@ -965,7 +975,7 @@ function updateweights($fromSlot, $toSlot, $fromInv, $toInv, $toAmount) {
           $fromInv
               .find("[data-slot=" + $fromSlot + "]")
               .html(
-                  '<div class="item-slot-img"><img src="images/' +
+                  '<div class="item-slot-img"><img src="' + getImgSrc(itemData.info.addOn) +
                   itemData.image +
                   '" alt="' +
                   itemData.name +
@@ -982,7 +992,7 @@ function updateweights($fromSlot, $toSlot, $fromInv, $toInv, $toAmount) {
           $fromInv
               .find("[data-slot=" + $fromSlot + "]")
               .html(
-                  '<div class="item-slot-img"><img src="images/' +
+                  '<div class="item-slot-img"><img src="' + getImgSrc(itemData.info.addOn) +
                   itemData.image +
                   '" alt="' +
                   itemData.name +
@@ -1010,7 +1020,7 @@ function updateweights($fromSlot, $toSlot, $fromInv, $toInv, $toAmount) {
           $toInv
               .find("[data-slot=" + $toSlot + "]")
               .html(
-                  '<div class="item-slot-img"><img src="images/' +
+                  '<div class="item-slot-img"><img src="' + getImgSrc(itemData.info.addOn) +
                   itemData.image +
                   '" alt="' +
                   itemData.name +
@@ -1027,7 +1037,7 @@ function updateweights($fromSlot, $toSlot, $fromInv, $toInv, $toAmount) {
           $toInv
               .find("[data-slot=" + $toSlot + "]")
               .html(
-                  '<div class="item-slot-img"><img src="images/' +
+                  '<div class="item-slot-img"><img src="' + getImgSrc(itemData.info.addOn) +
                   itemData.image +
                   '" alt="' +
                   itemData.name +
@@ -1185,7 +1195,7 @@ function optionSwitch(
       .html(
         '<div class="item-slot-key"><p>' +
           $toSlot +
-          '</p></div><div class="item-slot-img"><img src="images/' +
+          '</p></div><div class="item-slot-img"><img src="' + getImgSrc(fromData.info.addOn) +
           fromData.image +
           '" alt="' +
           fromData.name +
@@ -1202,7 +1212,7 @@ function optionSwitch(
     $toInv
       .find("[data-slot=" + $toSlot + "]")
       .html(
-        '<div class="item-slot-img"><img src="images/' +
+        '<div class="item-slot-img"><img src="' + getImgSrc(fromData.info.addOn) +
           fromData.image +
           '" alt="' +
           fromData.name +
@@ -1230,7 +1240,7 @@ function optionSwitch(
       .html(
         '<div class="item-slot-key"><p>' +
           $fromSlot +
-          '</p></div><div class="item-slot-img"><img src="images/' +
+          '</p></div><div class="item-slot-img"><img src="' + getImgSrc(toData.info.addOn) +
           toData.image +
           '" alt="' +
           toData.name +
@@ -1247,7 +1257,7 @@ function optionSwitch(
     $fromInv
       .find("[data-slot=" + $fromSlot + "]")
       .html(
-        '<div class="item-slot-img"><img src="images/' +
+        '</p></div><div class="item-slot-img"><img src="' + getImgSrc(toData.info.addOn) +
           toData.image +
           '" alt="' +
           toData.name +
@@ -1647,7 +1657,7 @@ var requiredItemOpen = false;
               .html(
                 '<div class="item-slot-key"><p>' +
                   item.slot +
-                  '</p></div><div class="item-slot-img"><img src="images/' +
+                  '</p></div><div class="item-slot-img"><img src="' +  getImgSrc(item.info.addOn) +
                   item.image +
                   '" alt="' +
                   item.name +
@@ -1669,7 +1679,7 @@ var requiredItemOpen = false;
             $(".player-inventory")
               .find("[data-slot=" + item.slot + "]")
               .html(
-                '<div class="item-slot-key"><p>6 <i class="fas fa-lock"></i></p></div><div class="item-slot-img"><img src="images/' +
+                '<div class="item-slot-key"><p>6 <i class="fas fa-lock"></i></p></div><div class="item-slot-img"><img src="' + getImgSrc(item.info.addOn) +
                   item.image +
                   '" alt="' +
                   item.name +
@@ -1691,7 +1701,7 @@ var requiredItemOpen = false;
             $(".player-inventory")
               .find("[data-slot=" + item.slot + "]")
               .html(
-                '<div class="item-slot-img"><img src="images/' +
+                '</p></div><div class="item-slot-img"><img src="' + getImgSrc(item.info.addOn) +
                   item.image +
                   '" alt="' +
                   item.name +
@@ -1776,7 +1786,7 @@ var requiredItemOpen = false;
             $(".other-inventory")
               .find("[data-slot=" + item.slot + "]")
               .html(
-                '<div class="item-slot-img"><img src="images/' +
+                '</p></div><div class="item-slot-img"><img src="' + getImgSrc(item.info.addOn) +
                   item.image +
                   '" alt="' +
                   item.name +
@@ -1792,7 +1802,7 @@ var requiredItemOpen = false;
             $(".other-inventory")
               .find("[data-slot=" + item.slot + "]")
               .html(
-                '<div class="item-slot-img"><img src="images/' +
+                '</p></div><div class="item-slot-img"><img src="' + getImgSrc(item.info.addOn) +
                   item.image +
                   '" alt="' +
                   item.name +
@@ -1933,7 +1943,7 @@ var requiredItemOpen = false;
               .html(
                 '<div class="item-slot-key"><p>' +
                   item.slot +
-                  '</p></div><div class="item-slot-img"><img src="images/' +
+                  '</p></div><div class="item-slot-img"><img src="' +  getImgSrc(item.info.addOn) +
                   item.image +
                   '" alt="' +
                   item.name +
@@ -1955,7 +1965,7 @@ var requiredItemOpen = false;
             $(".player-inventory")
               .find("[data-slot=" + item.slot + "]")
               .html(
-                '<div class="item-slot-key"><p>6 <i class="fas fa-lock"></i></p></div><div class="item-slot-img"><img src="images/' +
+                '<div class="item-slot-key"><p>6 <i class="fas fa-lock"></i></p></div><div class="item-slot-img"><img src="' + getImgSrc(item.info.addOn) +
                   item.image +
                   '" alt="' +
                   item.name +
@@ -1977,7 +1987,7 @@ var requiredItemOpen = false;
             $(".player-inventory")
               .find("[data-slot=" + item.slot + "]")
               .html(
-                '<div class="item-slot-img"><img src="images/' +
+                '</p></div><div class="item-slot-img"><img src="' + getImgSrc(item.info.addOn) +
                   item.image +
                   '" alt="' +
                   item.name +
@@ -2023,7 +2033,7 @@ var requiredItemOpen = false;
             $(".other-inventory")
               .find("[data-slot=" + item.slot + "]")
               .html(
-                '<div class="item-slot-img"><img src="images/' +
+                '</p></div><div class="item-slot-img"><img src="' + getImgSrc(item.info.addOn) +
                   item.image +
                   '" alt="' +
                   item.name +
@@ -2039,7 +2049,7 @@ var requiredItemOpen = false;
             $(".other-inventory")
               .find("[data-slot=" + item.slot + "]")
               .html(
-                '<div class="item-slot-img"><img src="images/' +
+                '</p></div><div class="item-slot-img"><img src="' + getImgSrc(item.info.addOn) +
                   item.image +
                   '" alt="' +
                   item.name +
@@ -2209,7 +2219,7 @@ var requiredItemOpen = false;
             .html(
               '<div class="item-slot-key"><p>' +
                 item.slot +
-                '</p></div><div class="item-slot-img"><img src="images/' +
+                '</p></div><div class="item-slot-img"><img src="' +  getImgSrc(item.info.addOn) +
                 item.image +
                 '" alt="' +
                 item.name +
@@ -2232,7 +2242,7 @@ var requiredItemOpen = false;
           $(".player-inventory")
             .find("[data-slot=" + item.slot + "]")
             .html(
-              '<div class="item-slot-key"><p>6 <i class="fas fa-lock"></i></p></div><div class="item-slot-img"><img src="images/' +
+              '<div class="item-slot-key"><p>6 <i class="fas fa-lock"></i></p></div><div class="item-slot-img"><img src="' + getImgSrc(item.info.addOn) +
                 item.image +
                 '" alt="' +
                 item.name +
@@ -2255,7 +2265,7 @@ var requiredItemOpen = false;
           $(".player-inventory")
             .find("[data-slot=" + item.slot + "]")
             .html(
-              '<div class="item-slot-img"><img src="images/' +
+              '</p></div><div class="item-slot-img"><img src="' + getImgSrc(item.info.addOn) +
                 item.image +
                 '" alt="' +
                 item.name +
@@ -2316,7 +2326,7 @@ var requiredItemOpen = false;
             $(".z-hotbar-inventory")
               .find("[data-zhotbarslot=" + item.slot + "]")
               .html(
-                '<div class="z-hotbar-item-slot-key"><p>6 <i style="top: -62px; left: 58px;" class="fas fa-lock"></i></p></div><div class="z-hotbar-item-slot-img"><img src="images/' +
+                '<div class="z-hotbar-item-slot-key"><p>6 <i style="top: -62px; left: 58px;" class="fas fa-lock"></i></p></div><div class="z-hotbar-item-slot-img"><img src="' +  getImgSrc(item.info.addOn) +
                   item.image +
                   '" alt="' +
                   item.name +
@@ -2334,7 +2344,7 @@ var requiredItemOpen = false;
               .html(
                 '<div class="z-hotbar-item-slot-key"><p>' +
                   item.slot +
-                  '</p></div><div class="z-hotbar-item-slot-img"><img src="images/' +
+                  '</p></div><div class="z-hotbar-item-slot-img"><img src="' +  getImgSrc(item.info.addOn) +
                   item.image +
                   '" alt="' +
                   item.name +
@@ -2364,7 +2374,7 @@ var requiredItemOpen = false;
     $("#itembox-action").html("<p>Used</p>");
     $("#itembox-label").html("<p>" + data.item.label + "</p>");
     $("#itembox-image").html(
-      '<div class="item-slot-img"><img src="images/' +
+      '</p></div><div class="item-slot-img"><img src="' + getImgSrc(data.item.info.addOn) +
         data.item.image +
         '" alt="' +
         data.item.name +
@@ -2396,7 +2406,7 @@ var requiredItemOpen = false;
         type +
         '</p></div><div id="itembox-label"><p>' +
         data.item.label +
-        '</p></div><div class="item-slot-img-itembox"><img src="images/' +
+        '</p></div><div class="item-slot-img-itembox"><img src="' +  getImgSrc(data.item.info.addOn) +
         data.item.image +
         '" alt="' +
         data.item.name +
@@ -2422,7 +2432,7 @@ var requiredItemOpen = false;
           var element =
             '<div class="requiredItem-box"><div id="requiredItem-action">Required</div><div id="requiredItem-label"><p>' +
             item.label +
-            '</p></div><div id="requiredItem-image"><div class="item-slot-img"><img src="images/' +
+            '</p></div><div id="requiredItem-image"><div class="item-slot-img"><img src="' +  getImgSrc(item.info.addOn) +
             item.image +
             '" alt="' +
             item.name +

@@ -442,7 +442,6 @@ RegisterNetEvent('inventory:client:OpenInventory', function(PlayerAmmo, inventor
 end)
 
 RegisterNUICallback("SetInventoryData", function(data, cb)
-    print(json.encode(data))
     QBCore.Functions.TriggerCallback('inventory:server:SetInventoryData', function(inventory, other)
         cb({inventory = inventory, slots = Config.MaxInventorySlots, other = other, maxweight = Config.MaxInventoryWeight})
     end, data)

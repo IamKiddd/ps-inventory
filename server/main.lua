@@ -16,13 +16,13 @@ CreateThread(function()
     end
 	local plate = MySQL.Sync.fetchAll('SELECT plate FROM player_vehicles')
 	local plates = {}
-	local inventory = MySQL.Sync.fetchAll('SELECT count(item_name) as amount, item_name, id, owner, information, slot, quality, MIN(creationDate) as creationDate FROM user_inventory2 group by item_name, slot, owner')
+	local inventory = MySQL.Sync.fetchAll('SELECT count(item_name) as amount, item_name, id, owner, information, slot, quality, MIN(creationDate) as creationDate FROM inventory group by item_name, slot, owner')
 	inv = {}
 	for _, row in ipairs(plate) do
 		table.insert(plates, row.plate)
 	end
 	local update_data = {}
-	local query = "DELETE FROM user_inventory2 WHERE item_name = ? AND slot = ?"
+	local query = "DELETE FROM inventory WHERE item_name = ? AND slot = ?"
 	for i, row in ipairs(inventory) do
 		local name = row.name
 		if not inv[name] then
@@ -57,16 +57,16 @@ CreateThread(function()
 end)
 
 local function ChangeSlot(item, name, from, to, amount)
-	MySQL.query.await('UPDATE user_inventory2 SET slot = ? WHERE owner = ? AND slot = ? AND item_name = ? LIMIT ?' , {to, name, from, item,amount})
-	local item = MySQL.Sync.fetchAll('SELECT count(item_name) as amount, item_name, id, owner, information, slot, quality, MIN(creationDate) as creationDate FROM user_inventory2 WHERE owner= ? group by item_name, slot, owner', {name})
+	MySQL.query.await('UPDATE inventory SET slot = ? WHERE owner = ? AND slot = ? AND item_name = ? LIMIT ?' , {to, name, from, item,amount})
+	local item = MySQL.Sync.fetchAll('SELECT count(item_name) as amount, item_name, id, owner, information, slot, quality, MIN(creationDate) as creationDate FROM inventory WHERE owner= ? group by item_name, slot, owner', {name})
 	inv[name] = item
 end
 
 local function ChangeInv(item, fromInv, fromSlot, toSlot, toInv, amount)
-	MySQL.query.await('UPDATE user_inventory2 SET name = ?, slot = ? WHERE owner = ? AND slot = ? AND item_name = ? LIMIT ?' , {toInv, toSlot, fromInv, fromSlot, item, amount})
-	local item = MySQL.Sync.fetchAll('SELECT count(item_name) as amount, item_name, id, owner, information, slot, quality, MIN(creationDate) as creationDate FROM user_inventory2 WHERE owner = ? group by item_name, slot, owner', {fromInv})
+	MySQL.query.await('UPDATE inventory SET name = ?, slot = ? WHERE owner = ? AND slot = ? AND item_name = ? LIMIT ?' , {toInv, toSlot, fromInv, fromSlot, item, amount})
+	local item = MySQL.Sync.fetchAll('SELECT count(item_name) as amount, item_name, id, owner, information, slot, quality, MIN(creationDate) as creationDate FROM inventory WHERE owner = ? group by item_name, slot, owner', {fromInv})
 	inv[fromInv] = item
-	local item2 = MySQL.Sync.fetchAll('SELECT count(item_name) as amount, item_name, id, owner , information, slot, quality, MIN(creationDate) as creationDate FROM user_inventory2 WHERE owner = ? group by item_name, slot, owner', {toInv})
+	local item2 = MySQL.Sync.fetchAll('SELECT count(item_name) as amount, item_name, id, owner , information, slot, quality, MIN(creationDate) as creationDate FROM inventory WHERE owner = ? group by item_name, slot, owner', {toInv})
 	inv[toInv] = item2
 end
 
@@ -255,10 +255,10 @@ local function AddItem(source, item, amount, slot, info, created)
 		if slot then
 			local queries = {}
 			for i = 1, amount, 1 do
-				queries[#queries+1] = {query = 'INSERT INTO user_inventory2 (item_name, owner, information, slot, creationDate, quality) VALUES (?, ?, ?,  ?, ?, ?)', values = {itemInfo['name'], 'ply-'..Player.PlayerData.citizenid, json.encode(info), slot, os.time(), 100}}
+				queries[#queries+1] = {query = 'INSERT INTO inventory (item_name, owner, information, slot, creationDate, quality) VALUES (?, ?, ?,  ?, ?, ?)', values = {itemInfo['name'], 'ply-'..Player.PlayerData.citizenid, json.encode(info), slot, os.time(), 100}}
 			end
 			local success = MySQL.transaction.await(queries)
-			local item2 = MySQL.Sync.fetchAll('SELECT count(item_name) as amount, item_name, id, owner, information, slot, quality, MIN(creationDate) as creationDate FROM user_inventory2 WHERE owner = ? group by item_name, slot, owner', {'ply-'..Player.PlayerData.citizenid})
+			local item2 = MySQL.Sync.fetchAll('SELECT count(item_name) as amount, item_name, id, owner, information, slot, quality, MIN(creationDate) as creationDate FROM inventory WHERE owner = ? group by item_name, slot, owner', {'ply-'..Player.PlayerData.citizenid})
 			inv['ply-'..Player.PlayerData.citizenid] = item2
 			if Player.Offline then return success end
 			TriggerEvent('qb-log:server:CreateLog', 'playerinventory', 'AddItem', 'green', '**' .. GetPlayerName(source) .. ' (citizenid: ' .. Player.PlayerData.citizenid .. ' | id: ' .. source .. ')** got item: [slot:' .. slot .. '], itemname: ' .. BuildInventory(inv['ply-'..Player.PlayerData.citizenid])[slot].name .. ', added amount: ' .. amount .. ', new total amount: ' .. BuildInventory(inv['ply-'..Player.PlayerData.citizenid])[slot].amount)
@@ -268,10 +268,10 @@ local function AddItem(source, item, amount, slot, info, created)
 				if BuildInventory(inv['ply-'..Player.PlayerData.citizenid])[i] == nil then
 					local queries = {}
 					for j = 1, amount, 1 do
-						queries[#queries+1] = {query = 'INSERT INTO user_inventory2 (item_name, owner, information, slot, creationDate, quality) VALUES (?, ?, ?, ?, ?, ?, ?)', values = {itemInfo['name'], 'ply-'..Player.PlayerData.citizenid, json.encode(info), i, os.time(), 100}}
+						queries[#queries+1] = {query = 'INSERT INTO inventory (item_name, owner, information, slot, creationDate, quality) VALUES (?, ?, ?, ?, ?, ?)', values = {itemInfo['name'], 'ply-'..Player.PlayerData.citizenid, json.encode(info), i, os.time(), 100}}
 					end
 					local success = MySQL.transaction.await(queries)
-					local item2 = MySQL.Sync.fetchAll('SELECT count(item_name) as amount, item_name, id, owner, information, slot, quality, MIN(creationDate) as creationDate FROM user_inventory2 WHERE owner = ? group by item_name, slot, owner', {'ply-'..Player.PlayerData.citizenid})
+					local item2 = MySQL.Sync.fetchAll('SELECT count(item_name) as amount, item_name, id, owner, information, slot, quality, MIN(creationDate) as creationDate FROM inventory WHERE owner = ? group by item_name, slot, owner', {'ply-'..Player.PlayerData.citizenid})
 					inv['ply-'..Player.PlayerData.citizenid] = item2
 					if Player.Offline then return success end
 					TriggerEvent('qb-log:server:CreateLog', 'playerinventory', 'AddItem', 'green', '**' .. GetPlayerName(source) .. ' (citizenid: ' .. Player.PlayerData.citizenid .. ' | id: ' .. source .. ')** got item: [slot:' .. i .. '], itemname: ' .. BuildInventory(inv['ply-'..Player.PlayerData.citizenid])[i].name .. ', added amount: ' .. amount .. ', new total amount: ' .. BuildInventory(inv['ply-'..Player.PlayerData.citizenid])[i].amount)
@@ -295,8 +295,8 @@ local function RemoveItem(source, item, amount, slot)
 	amount = tonumber(amount) or 1
 	slot = tonumber(slot)
 	if slot then
-		MySQL.query.await('DELETE FROM user_inventory2 WHERE owner = ? AND slot = ? LIMIT ?' , {'ply-'..Player.PlayerData.citizenid, slot, amount})
-		local item = MySQL.Sync.fetchAll('SELECT count(item_name) as amount, item_name, id, owner, information, slot, quality, MIN(creationDate) as creationDate FROM user_inventory2 WHERE owner = ? group by item_name, slot, owner', {'ply-'..Player.PlayerData.citizenid})
+		MySQL.query.await('DELETE FROM inventory WHERE owner = ? AND slot = ? LIMIT ?' , {'ply-'..Player.PlayerData.citizenid, slot, amount})
+		local item = MySQL.Sync.fetchAll('SELECT count(item_name) as amount, item_name, id, owner, information, slot, quality, MIN(creationDate) as creationDate FROM inventory WHERE owner = ? group by item_name, slot, owner', {'ply-'..Player.PlayerData.citizenid})
 		inv['ply-'..Player.PlayerData.citizenid] = item
 		if Player.Offline then return true end
 		TriggerEvent('qb-log:server:CreateLog', 'playerinventory', 'RemoveItem', 'red', '**' .. GetPlayerName(source) .. ' (citizenid: ' .. Player.PlayerData.citizenid .. ' | id: ' .. source .. ')** lost item: [slot:' .. slot .. '], itemname: ' .. item .. ', removed amount: ' .. amount .. ', new total amount: ' .. BuildInventory(inv['ply-'..Player.PlayerData.citizenid])[slot].amount)
@@ -307,13 +307,13 @@ local function RemoveItem(source, item, amount, slot)
 		if amount < amountHave then return false end
 		for _, _slot in pairs(slots) do
 			if BuildInventory(inv['ply-'..Player.PlayerData.citizenid])[_slot].amount >= amount then
-				MySQL.query.await('DELETE FROM user_inventory2 WHERE owner = ? AND slot = ? LIMIT ?' , {'ply-'..Player.PlayerData.citizenid, _slot, amount})
+				MySQL.query.await('DELETE FROM inventory WHERE owner = ? AND slot = ? LIMIT ?' , {'ply-'..Player.PlayerData.citizenid, _slot, amount})
 				inv['ply-'..Player.PlayerData.citizenid] = item
 				if Player.Offline then return true end
 				TriggerEvent('qb-log:server:CreateLog', 'playerinventory', 'RemoveItem', 'red', '**' .. GetPlayerName(source) .. ' (citizenid: ' .. Player.PlayerData.citizenid .. ' | id: ' .. source .. ')** lost item: [slot:' .. _slot .. '], itemname: ' .. item .. ', removed amount: ' .. amount .. ', new total amount: ' .. BuildInventory(inv['ply-'..Player.PlayerData.citizenid])[_slot].amount)
 				return true
 			else
-				MySQL.query.await('DELETE FROM user_inventory2 WHERE owner = ? AND slot = ? LIMIT ?' , {'ply-'..Player.PlayerData.citizenid, _slot, BuildInventory(inv['ply-'..Player.PlayerData.citizenid])[_slot].amount})
+				MySQL.query.await('DELETE FROM inventory WHERE owner = ? AND slot = ? LIMIT ?' , {'ply-'..Player.PlayerData.citizenid, _slot, BuildInventory(inv['ply-'..Player.PlayerData.citizenid])[_slot].amount})
 				amount -= BuildInventory(inv['ply-'..Player.PlayerData.citizenid])[_slot].amount
 			end
 		end
@@ -365,10 +365,10 @@ local function ClearInventory(source, filterItems)
 	if filterItems then
 		local filterItemsType = type(filterItems)
 		if filterItemsType == "string" then
-			MySQL.query.await('UPDATE user_inventory2 SET owner = ? WHERE owner = ? AND item_name = ?' , {'saveply-'..Player.PlayerData.citizenid, 'ply-'..Player.PlayerData.citizenid, filterItems})
+			MySQL.query.await('UPDATE inventory SET owner = ? WHERE owner = ? AND item_name = ?' , {'saveply-'..Player.PlayerData.citizenid, 'ply-'..Player.PlayerData.citizenid, filterItems})
 		elseif filterItemsType == "table" and table.type(filterItems) == "array" then
 			local update_data = {}
-			local query = "UPDATE user_inventory2 SET owner = ? WHERE owner = ? AND item_name = ?"
+			local query = "UPDATE inventory SET owner = ? WHERE owner = ? AND item_name = ?"
 			for i = 1, #filterItems do
 				update_data[#update_data + 1] = {query = query, values = {'saveply-'..Player.PlayerData.citizenid, 'ply-'..Player.PlayerData.citizenid, filterItems[i]}}
 			end
@@ -379,10 +379,10 @@ local function ClearInventory(source, filterItems)
 			end)
 		end
 	else
-		MySQL.query.await('DELETE FROM user_inventory2 WHERE owner = ?' , {'ply-'..Player.PlayerData.citizenid})
+		MySQL.query.await('DELETE FROM inventory WHERE owner = ?' , {'ply-'..Player.PlayerData.citizenid})
 	end
-	MySQL.query.await('UPDATE user_inventory2 SET owner = ? WHERE owner = ?' , {'ply-'..Player.PlayerData.citizenid, 'saveply-'..Player.PlayerData.citizenid})
-	inv['ply-'..Player.PlayerData.citizenid] = MySQL.Sync.fetchAll('SELECT count(item_name) as amount, item_name, id, owner, information, slot, quality, MIN(creationDate) as creationDate FROM user_inventory2 WHERE owner = ? group by item_name, slot, name', {'ply-'..Player.PlayerData.citizenid})
+	MySQL.query.await('UPDATE inventory SET owner = ? WHERE owner = ?' , {'ply-'..Player.PlayerData.citizenid, 'saveply-'..Player.PlayerData.citizenid})
+	inv['ply-'..Player.PlayerData.citizenid] = MySQL.Sync.fetchAll('SELECT count(item_name) as amount, item_name, id, owner, information, slot, quality, MIN(creationDate) as creationDate FROM inventory WHERE owner = ? group by item_name, slot, name', {'ply-'..Player.PlayerData.citizenid})
 	if Player.Offline then return end
 	TriggerEvent('qb-log:server:CreateLog', 'playerinventory', 'ClearInventory', 'red', '**' .. GetPlayerName(source) .. ' (citizenid: ' .. Player.PlayerData.citizenid .. ' | id: ' .. source .. ')** inventory cleared')
 end
