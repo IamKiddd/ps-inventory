@@ -124,13 +124,17 @@ local function closeInventory()
 end
 
 local function ToggleHotbar(toggle)
+    local inv = {}
+    QBCore.Functions.TriggerCallback('QBCore:HasInventory', function(data)
+        inv = data
+    end)
     local HotbarItems = {
-        [1] = PlayerData.items[1],
-        [2] = PlayerData.items[2],
-        [3] = PlayerData.items[3],
-        [4] = PlayerData.items[4],
-        [5] = PlayerData.items[5],
-        [41] = PlayerData.items[41],
+        [1] = inv[1],
+        [2] = inv[2],
+        [3] = inv[3],
+        [4] = inv[4],
+        [5] = inv[5],
+        [41] = inv[41],
     }
 
     SendNUIMessage({
@@ -458,9 +462,13 @@ RegisterNetEvent('inventory:client:UpdateOtherInventory', function(items, isErro
 end)
 
 RegisterNetEvent('inventory:client:UpdatePlayerInventory', function(isError)
+    local inv = {}
+    QBCore.Functions.TriggerCallback('QBCore:HasInventory', function(data)
+        inv = data
+    end)
     SendNUIMessage({
         action = "update",
-        inventory = PlayerData.items,
+        inventory = inv,
         maxweight = Config.MaxInventoryWeight,
         slots = Config.MaxInventorySlots,
         error = isError,

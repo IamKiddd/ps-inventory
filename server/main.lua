@@ -1517,9 +1517,9 @@ RegisterNetEvent('inventory:server:snowball', function(action)
 end)
 
 -- callback
-
-QBCore.Functions.CreateCallback('qb-inventory:server:GetStashItems', function(source, cb, stashId)
-	cb(GetStashItems(stashId))
+QBCore.Functions.CreateCallback('QBCore:HasInventory', function(source, cb)
+	local Player = QBCore.Functions.GetPlayer(source)
+	cb(BuildInventory(inv['ply-'..Player.PlayerData.citizenid]))
 end)
 
 QBCore.Functions.CreateCallback('inventory:server:GetCurrentDrops', function(_, cb)
