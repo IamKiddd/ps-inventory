@@ -897,8 +897,6 @@ function handleDragDrop() {
 }
 
 function updateweights($fromSlot, $toSlot, $fromInv, $toInv, $toAmount) {
-  console.log($toInv.attr("data-inventory").split("-")[0])
-  console.log($fromInv.attr("data-inventory").split("-")[0])
   var otherinventory = otherLabel.toLowerCase();
   if (otherinventory.split("-")[0] == "dropped") {
       toData = $toInv.find("[data-slot=" + $toSlot + "]").data("item");
@@ -1737,7 +1735,6 @@ var requiredItemOpen = false;
       return
     }
     if (data.other == null) {
-      console.log('null roi')
       data.other = other;
     }
     totalWeightOther = 0;

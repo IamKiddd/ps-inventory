@@ -24,7 +24,7 @@ CreateThread(function()
 	local update_data = {}
 	local query = "DELETE FROM inventory WHERE item_name = ? AND slot = ?"
 	for i, row in ipairs(inventory) do
-		local name = row.name
+		local name = row.owner
 		if not inv[name] then
 			inv[name] = {}
 		end
