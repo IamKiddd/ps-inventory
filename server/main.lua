@@ -215,8 +215,8 @@ end
 
 local function GetFirstSlotByItem(items, itemName, info)
     if not items then return nil end
-	if QBCore.Shared.Items[itemName:lower()]['unique'] then return nil end
-	if QBCore.Shared.Items[itemName:lower()]['type'] == 'weapon' then return nil end
+	if QBCore.Shared.Items[itemName:lower()]['unique'] and info then return nil end
+	if QBCore.Shared.Items[itemName:lower()]['type'] == 'weapon' and info  then return nil end
     for slot, item in pairs(items) do
         if item.name:lower() == itemName:lower() then
 			if info then
@@ -319,13 +319,13 @@ local function RemoveItem(source, item, amount, slot)
 	local Player = QBCore.Functions.GetPlayer(source)
 	if not Player then return false end
 	amount = tonumber(amount) or 1
-	slot = tonumber(slot)
+	slot = tonumber(slot) or nil
 	if slot then
 		MySQL.query.await('DELETE FROM inventory WHERE owner = ? AND slot = ? LIMIT ?' , {'ply-'..Player.PlayerData.citizenid, slot, amount})
-		local item = MySQL.Sync.fetchAll('SELECT count(item_name) as amount, item_name, id, owner, information, slot, quality, MIN(creationDate) as creationDate FROM inventory WHERE owner = ? group by item_name, slot, owner', {'ply-'..Player.PlayerData.citizenid})
-		inv['ply-'..Player.PlayerData.citizenid] = item
+		local items = MySQL.Sync.fetchAll('SELECT count(item_name) as amount, item_name, id, owner, information, slot, quality, MIN(creationDate) as creationDate FROM inventory WHERE owner = ? group by item_name, slot, owner', {'ply-'..Player.PlayerData.citizenid})
+		inv['ply-'..Player.PlayerData.citizenid] = items
 		if Player.Offline then return true end
-		TriggerEvent('qb-log:server:CreateLog', 'playerinventory', 'RemoveItem', 'red', '**' .. GetPlayerName(source) .. ' (citizenid: ' .. Player.PlayerData.citizenid .. ' | id: ' .. source .. ')** lost item: [slot:' .. slot .. '], itemname: ' .. item .. ', removed amount: ' .. amount .. ', new total amount: ' .. BuildInventory(inv['ply-'..Player.PlayerData.citizenid])[slot].amount)
+		TriggerEvent('qb-log:server:CreateLog', 'playerinventory', 'RemoveItem', 'red', '**' .. GetPlayerName(source) .. ' (citizenid: ' .. Player.PlayerData.citizenid .. ' | id: ' .. source .. ')** lost item: [slot:' .. slot .. '], itemname: ' .. item .. ', removed amount: ' .. amount )
 		return true
 	else
 		local slots, amountHave = GetSlotsByItem(BuildInventory(inv['ply-'..Player.PlayerData.citizenid]), item)
@@ -334,9 +334,10 @@ local function RemoveItem(source, item, amount, slot)
 		for _, _slot in pairs(slots) do
 			if BuildInventory(inv['ply-'..Player.PlayerData.citizenid])[_slot].amount >= amount then
 				MySQL.query.await('DELETE FROM inventory WHERE owner = ? AND slot = ? LIMIT ?' , {'ply-'..Player.PlayerData.citizenid, _slot, amount})
-				inv['ply-'..Player.PlayerData.citizenid] = item
+				local items = MySQL.Sync.fetchAll('SELECT count(item_name) as amount, item_name, id, owner, information, slot, quality, MIN(creationDate) as creationDate FROM inventory WHERE owner = ? group by item_name, slot, owner', {'ply-'..Player.PlayerData.citizenid})
+				inv['ply-'..Player.PlayerData.citizenid] = items
 				if Player.Offline then return true end
-				TriggerEvent('qb-log:server:CreateLog', 'playerinventory', 'RemoveItem', 'red', '**' .. GetPlayerName(source) .. ' (citizenid: ' .. Player.PlayerData.citizenid .. ' | id: ' .. source .. ')** lost item: [slot:' .. _slot .. '], itemname: ' .. item .. ', removed amount: ' .. amount .. ', new total amount: ' .. BuildInventory(inv['ply-'..Player.PlayerData.citizenid])[_slot].amount)
+				TriggerEvent('qb-log:server:CreateLog', 'playerinventory', 'RemoveItem', 'red', '**' .. GetPlayerName(source) .. ' (citizenid: ' .. Player.PlayerData.citizenid .. ' | id: ' .. source .. ')** lost item: [slot:' .. _slot .. '], itemname: ' .. item .. ', removed amount: ' .. amount)
 				return true
 			else
 				MySQL.query.await('DELETE FROM inventory WHERE owner = ? AND slot = ? LIMIT ?' , {'ply-'..Player.PlayerData.citizenid, _slot, BuildInventory(inv['ply-'..Player.PlayerData.citizenid])[_slot].amount})
@@ -346,6 +347,7 @@ local function RemoveItem(source, item, amount, slot)
 	end
 	return false
 end
+
 
 exports("RemoveItem", RemoveItem)
 
