@@ -63,7 +63,7 @@ local function ChangeSlot(item, name, from, to, amount)
 end
 
 local function ChangeInv(item, fromInv, fromSlot, toSlot, toInv, amount)
-	MySQL.query.await('UPDATE inventory SET name = ?, slot = ? WHERE owner = ? AND slot = ? AND item_name = ? LIMIT ?' , {toInv, toSlot, fromInv, fromSlot, item, amount})
+	MySQL.query.await('UPDATE inventory SET owner = ?, slot = ? WHERE owner = ? AND slot = ? AND item_name = ? LIMIT ?' , {toInv, toSlot, fromInv, fromSlot, item, amount})
 	local item = MySQL.Sync.fetchAll('SELECT count(item_name) as amount, item_name, id, owner, information, slot, quality, MIN(creationDate) as creationDate FROM inventory WHERE owner = ? group by item_name, slot, owner', {fromInv})
 	inv[fromInv] = item
 	local item2 = MySQL.Sync.fetchAll('SELECT count(item_name) as amount, item_name, id, owner , information, slot, quality, MIN(creationDate) as creationDate FROM inventory WHERE owner = ? group by item_name, slot, owner', {toInv})
@@ -264,18 +264,44 @@ local function AddItem(source, item, amount, slot, info, created)
 			TriggerEvent('qb-log:server:CreateLog', 'playerinventory', 'AddItem', 'green', '**' .. GetPlayerName(source) .. ' (citizenid: ' .. Player.PlayerData.citizenid .. ' | id: ' .. source .. ')** got item: [slot:' .. slot .. '], itemname: ' .. BuildInventory(inv['ply-'..Player.PlayerData.citizenid])[slot].name .. ', added amount: ' .. amount .. ', new total amount: ' .. BuildInventory(inv['ply-'..Player.PlayerData.citizenid])[slot].amount)
 			return success
 		else
-			for i = 1, Config.MaxInventorySlots, 1 do
-				if BuildInventory(inv['ply-'..Player.PlayerData.citizenid])[i] == nil then
-					local queries = {}
+			local queries = {}
+			local success = false
+			if itemInfo['unique'] then
+				local cacheInv = BuildInventory(inv['ply-'..Player.PlayerData.citizenid])
+				if countPairs(cacheInv) + amount <= Config.MaxInventorySlots then
 					for j = 1, amount, 1 do
-						queries[#queries+1] = {query = 'INSERT INTO inventory (item_name, owner, information, slot, creationDate, quality) VALUES (?, ?, ?, ?, ?, ?)', values = {itemInfo['name'], 'ply-'..Player.PlayerData.citizenid, json.encode(info), i, os.time(), 100}}
+						for i = 1, Config.MaxInventorySlots, 1 do
+							if cacheInv[i] == nil then
+								queries[#queries+1] = {query = 'INSERT INTO inventory (item_name, owner, information, slot, creationDate, quality) VALUES (?, ?, ?, ?, ?, ?)', values = {itemInfo['name'], 'ply-'..Player.PlayerData.citizenid, json.encode(info), i, os.time(), 100}}
+								cacheInv[i] = true
+								goto j
+							end
+						end
+						::j::
 					end
-					local success = MySQL.transaction.await(queries)
+					success = MySQL.transaction.await(queries)
 					local item2 = MySQL.Sync.fetchAll('SELECT count(item_name) as amount, item_name, id, owner, information, slot, quality, MIN(creationDate) as creationDate FROM inventory WHERE owner = ? group by item_name, slot, owner', {'ply-'..Player.PlayerData.citizenid})
 					inv['ply-'..Player.PlayerData.citizenid] = item2
 					if Player.Offline then return success end
-					TriggerEvent('qb-log:server:CreateLog', 'playerinventory', 'AddItem', 'green', '**' .. GetPlayerName(source) .. ' (citizenid: ' .. Player.PlayerData.citizenid .. ' | id: ' .. source .. ')** got item: [slot:' .. i .. '], itemname: ' .. BuildInventory(inv['ply-'..Player.PlayerData.citizenid])[i].name .. ', added amount: ' .. amount .. ', new total amount: ' .. BuildInventory(inv['ply-'..Player.PlayerData.citizenid])[i].amount)
+					TriggerEvent('qb-log:server:CreateLog', 'playerinventory', 'AddItem', 'green', '**' .. GetPlayerName(source) .. ' (citizenid: ' .. Player.PlayerData.citizenid .. ' | id: ' .. source .. ')**, itemname: ' .. itemInfo['name'] .. ', added amount: ' .. amount )
 					return success
+				else
+					return false
+				end
+			else
+				for i = 1, Config.MaxInventorySlots, 1 do
+					if BuildInventory(inv['ply-'..Player.PlayerData.citizenid])[i] == nil then
+						local queries = {}
+						for j = 1, amount, 1 do
+							queries[#queries+1] = {query = 'INSERT INTO inventory (item_name, owner, information, slot, creationDate, quality) VALUES (?, ?, ?, ?, ?, ?)', values = {itemInfo['name'], 'ply-'..Player.PlayerData.citizenid, json.encode(info), i, os.time(), 100}}
+						end
+						local success = MySQL.transaction.await(queries)
+						local item2 = MySQL.Sync.fetchAll('SELECT count(item_name) as amount, item_name, id, owner, information, slot, quality, MIN(creationDate) as creationDate FROM inventory WHERE owner = ? group by item_name, slot, owner', {'ply-'..Player.PlayerData.citizenid})
+						inv['ply-'..Player.PlayerData.citizenid] = item2
+						if Player.Offline then return success end
+						TriggerEvent('qb-log:server:CreateLog', 'playerinventory', 'AddItem', 'green', '**' .. GetPlayerName(source) .. ' (citizenid: ' .. Player.PlayerData.citizenid .. ' | id: ' .. source .. ')** got item: [slot:' .. i .. '], itemname: ' .. BuildInventory(inv['ply-'..Player.PlayerData.citizenid])[i].name .. ', added amount: ' .. amount .. ', new total amount: ' .. BuildInventory(inv['ply-'..Player.PlayerData.citizenid])[i].amount)
+						return success
+					end
 				end
 			end
 		end
@@ -1600,6 +1626,7 @@ QBCore.Commands.Add("giveitem", "Give An Item (Admin Only)", {{name="id", help="
 
 				if AddItem(id, itemData["name"], amount, false, info) then
 					QBCore.Functions.Notify(source, "You Have Given " ..GetPlayerName(id).." "..amount.." "..itemData["name"].. "", "success")
+					TriggerClientEvent('inventory:client:ItemBox', source, QBCore.Shared.Items[itemData["name"]], 'add', amount)
 				else
 					QBCore.Functions.Notify(source, "Can\'t give item!", "error")
 				end
